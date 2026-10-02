@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: policies
+  name: rhacm-policies
   labels:
-    app.kubernetes.io/name: policies
+    app.kubernetes.io/name: rhacm-policies
     app.kubernetes.io/part-of: crowdstrike-falcon
     openshift.io/cluster-monitoring: "true"

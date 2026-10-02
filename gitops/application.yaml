@@ -19,7 +19,7 @@ spec:
     path: policies
   destination:
     server: https://kubernetes.default.svc
-    namespace: policies
+    namespace: rhacm-policies
   syncPolicy:
     automated:
       prune: true

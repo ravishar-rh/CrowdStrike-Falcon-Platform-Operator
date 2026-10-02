@@ -76,7 +76,7 @@ For OpenShift (including ROSA HCP), CrowdStrike recommends **FalconNodeSensor** 
 
 1. You edit `policygenerator/input/*` and regenerate policies on this laptop.
 2. You push `policies/` (and optionally the generator sources) to GitHub.
-3. OpenShift GitOps applies Policies onto the ACM hub (`policies` namespace).
+3. OpenShift GitOps applies Policies onto the ACM hub (`rhacm-policies` namespace).
 4. ACM Placement selects OpenShift clusters (`vendor=OpenShift`), including the hub (if labeled) and imported clusters.
 5. ConfigurationPolicies enforce Namespace / OperatorGroup / Subscription / Secret / Falcon CRs on each selected cluster.
 6. OLM installs `falcon-operator.v1.15.0` from `certified-operators`; the CSV brings its own ClusterRoles/Bindings/ServiceAccounts.
@@ -136,9 +136,9 @@ Output: `policies/falcon-operator-policies.yaml`.
 ### 4. Create hub credentials Secret (once)
 
 ```bash
-oc create namespace policies --dry-run=client -o yaml | oc apply -f -
+oc apply -f gitops/policies-namespace.yaml
 
-oc create secret generic falcon-api-credentials -n policies \
+oc create secret generic falcon-api-credentials -n rhacm-policies \
   --from-literal=falcon-client-id='YOUR_CLIENT_ID' \
   --from-literal=falcon-client-secret='YOUR_CLIENT_SECRET' \
   --from-literal=falcon-cid='YOUR_CID' \
@@ -182,7 +182,7 @@ After the CSV is Succeeded, Falcon CRs become Compliant and sensors roll out.
 
 ```bash
 # Hub policy status
-oc get policy,policyset,placement,placementbinding -n policies
+oc get policy,policyset,placement,placementbinding -n rhacm-policies
 
 # On a managed cluster
 oc get csv -n falcon-operator
@@ -288,7 +288,7 @@ spec:
 | Policy NonCompliant on Subscription | CatalogSource `certified-operators` healthy; CSV name matches `falcon-operator.v1.15.0`. |
 | InstallPlan pending | Manual approval required (step 7). |
 | CRs NonCompliant / unknown type | Operator CSV not Succeeded yet; wait or approve InstallPlan. |
-| Secret empty / auth errors | Hub Secret `policies/falcon-api-credentials` exists; hub templates enabled. |
+| Secret empty / auth errors | Hub Secret `rhacm-policies/falcon-api-credentials` exists; hub templates enabled. |
 | Node sensor CrashLoop | Privileged PSA/SCC; node connectivity to Falcon; sensor version ≥ 7.40. |
 | Admission webhook blocking deploys | Review `disabledNamespaces`; temporarily `failurePolicy: Ignore`. |
 | Image pull failures | Network to CrowdStrike registry or OpenShift ImageStream mirror permissions. |

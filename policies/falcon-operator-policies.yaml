@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: falcon-operator
     app.kubernetes.io/part-of: crowdstrike-falcon
   name: placement-falcon-operator
-  namespace: policies
+  namespace: rhacm-policies
 spec:
   predicates:
   - requiredClusterSelector:
@@ -31,7 +31,7 @@ metadata:
     app.kubernetes.io/managed-by: policy-generator
     app.kubernetes.io/part-of: crowdstrike-falcon
   name: binding-falcon-operator
-  namespace: policies
+  namespace: rhacm-policies
 placementRef:
   apiGroup: cluster.open-cluster-management.io
   kind: Placement
@@ -53,14 +53,14 @@ metadata:
     app.kubernetes.io/managed-by: policy-generator
     app.kubernetes.io/part-of: crowdstrike-falcon
   name: policy-falcon-crs
-  namespace: policies
+  namespace: rhacm-policies
 spec:
   dependencies:
   - apiVersion: policy.open-cluster-management.io/v1
     compliance: Compliant
     kind: Policy
     name: policy-falcon-secrets
-    namespace: policies
+    namespace: rhacm-policies
   disabled: false
   policy-templates:
   - objectDefinition:
@@ -201,7 +201,7 @@ metadata:
     app.kubernetes.io/managed-by: policy-generator
     app.kubernetes.io/part-of: crowdstrike-falcon
   name: policy-falcon-operator-install
-  namespace: policies
+  namespace: rhacm-policies
 spec:
   disabled: false
   policy-templates:
@@ -320,14 +320,14 @@ metadata:
     app.kubernetes.io/managed-by: policy-generator
     app.kubernetes.io/part-of: crowdstrike-falcon
   name: policy-falcon-secrets
-  namespace: policies
+  namespace: rhacm-policies
 spec:
   dependencies:
   - apiVersion: policy.open-cluster-management.io/v1
     compliance: Compliant
     kind: Policy
     name: policy-falcon-operator-install
-    namespace: policies
+    namespace: rhacm-policies
   disabled: false
   policy-templates:
   - objectDefinition:
@@ -351,13 +351,13 @@ spec:
               name: falcon-secrets
               namespace: falcon-operator
             stringData:
-              falcon-cid: '{{hub fromSecret "policies" "falcon-api-credentials" "falcon-cid"
-                hub}}'
-              falcon-client-id: '{{hub fromSecret "policies" "falcon-api-credentials"
+              falcon-cid: '{{hub fromSecret "rhacm-policies" "falcon-api-credentials"
+                "falcon-cid" hub}}'
+              falcon-client-id: '{{hub fromSecret "rhacm-policies" "falcon-api-credentials"
                 "falcon-client-id" hub}}'
-              falcon-client-secret: '{{hub fromSecret "policies" "falcon-api-credentials"
+              falcon-client-secret: '{{hub fromSecret "rhacm-policies" "falcon-api-credentials"
                 "falcon-client-secret" hub}}'
-              falcon-provisioning-token: '{{hub fromSecret "policies" "falcon-api-credentials"
+              falcon-provisioning-token: '{{hub fromSecret "rhacm-policies" "falcon-api-credentials"
                 "falcon-provisioning-token" hub}}'
             type: Opaque
         pruneObjectBehavior: DeleteIfCreated
@@ -372,7 +372,7 @@ metadata:
     app.kubernetes.io/managed-by: policy-generator
     app.kubernetes.io/part-of: crowdstrike-falcon
   name: falcon-platform
-  namespace: policies
+  namespace: rhacm-policies
 spec:
   description: Installs CrowdStrike Falcon Platform Operator v1.15.0 (certified-1.0)
     plus Node Sensor, Admission Controller, and Image Analyzer on the ROSA HCP hub
