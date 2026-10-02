@@ -1,0 +1,25 @@
+# Optional: label OpenShift Virtualization worker nodes for Falcon grouping / affinity.
+# Apply via ACM policy or directly if you want virt hosts identifiable in Falcon tags.
+---
+apiVersion: falcon.crowdstrike.com/v1alpha1
+kind: FalconNodeSensor
+metadata:
+  name: falcon-node-sensor
+spec:
+  falcon:
+    tags:
+      - openshift
+      - rosa-hcp
+      - openshift-virtualization
+      - acm-managed
+  node:
+    # Prefer scheduling on virt-capable workers when labeled
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: node.kubevirt.io/schedulable
+                operator: In
+                values:
+                  - "true"

@@ -1,0 +1,35 @@
+# Argo CD Application: sync generated ACM Policies onto the hub.
+# Update spec.source.repoURL to your GitHub repository before applying.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: falcon-operator-acm-policies
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/name: falcon-operator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/YOUR_ORG/CrowdStrike-Falcon-Platform-Operator.git
+    targetRevision: main
+    path: policies
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: policies
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

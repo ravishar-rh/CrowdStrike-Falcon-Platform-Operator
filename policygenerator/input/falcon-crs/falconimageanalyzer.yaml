@@ -1,0 +1,25 @@
+apiVersion: falcon.crowdstrike.com/v1alpha1
+kind: FalconImageAnalyzer
+metadata:
+  name: falcon-image-analyzer
+  labels:
+    crowdstrike.com/component: image-analyzer
+    crowdstrike.com/part-of: Falcon
+    crowdstrike.com/provider: crowdstrike
+    app.kubernetes.io/managed-by: acm-policy
+spec:
+  installNamespace: falcon-image-analyzer
+  falcon_api:
+    cloud_region: autodiscover
+  falconSecret:
+    enabled: true
+    namespace: falcon-operator
+    secretName: falcon-secrets
+  registry:
+    type: crowdstrike
+  # Optional tuning:
+  # imageAnalyzerConfig:
+  #   volumeSizeLimit: 20Gi
+  #   exclude:
+  #     namespaces:
+  #       - openshift-marketplace

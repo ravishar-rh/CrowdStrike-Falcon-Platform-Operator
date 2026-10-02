@@ -1,0 +1,14 @@
+# Local Policy Generator binary (downloaded by scripts/install-policy-generator.sh)
+.kustomize/
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Secrets — never commit real credentials
+**/falcon-api-credentials.yaml
+**/*secret*local*.yaml
+.env
+.env.*

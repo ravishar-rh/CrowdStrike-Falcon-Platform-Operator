@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: falcon-operator
+  namespace: falcon-operator
+  labels:
+    app.kubernetes.io/name: falcon-operator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+    app.kubernetes.io/managed-by: acm-policy
+spec:
+  # Empty targetNamespaces = OwnNamespace install mode (operator watches all namespaces)
+  upgradeStrategy: Default

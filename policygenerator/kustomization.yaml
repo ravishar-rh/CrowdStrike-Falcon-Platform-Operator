@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Policy Generator is an exec Kustomize plugin. Build with:
+#   kustomize build --enable-alpha-plugins .
+# or use ../scripts/generate-policies.sh
+
+generators:
+  - policyGenerator.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: crowdstrike-falcon
+      app.kubernetes.io/managed-by: policy-generator
+    includeSelectors: false

@@ -1,0 +1,26 @@
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: placement-falcon-operator
+  namespace: policies
+  labels:
+    app.kubernetes.io/name: falcon-operator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+spec:
+  # Selects the ROSA HCP hub and all imported OpenShift managed clusters.
+  # Narrow with additional matchExpressions (e.g. environment=prod) as needed.
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: vendor
+              operator: In
+              values:
+                - OpenShift
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+      effect: NoSchedule
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+      effect: NoSchedule

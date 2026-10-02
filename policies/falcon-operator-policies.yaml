@@ -1,0 +1,383 @@
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: policy-generator
+    app.kubernetes.io/name: falcon-operator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+  name: placement-falcon-operator
+  namespace: policies
+spec:
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions:
+        - key: vendor
+          operator: In
+          values:
+          - OpenShift
+  tolerations:
+  - effect: NoSchedule
+    key: cluster.open-cluster-management.io/unreachable
+    operator: Exists
+  - effect: NoSchedule
+    key: cluster.open-cluster-management.io/unavailable
+    operator: Exists
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: policy-generator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+  name: binding-falcon-operator
+  namespace: policies
+placementRef:
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+  name: placement-falcon-operator
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: PolicySet
+  name: falcon-platform
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  annotations:
+    policy.open-cluster-management.io/categories: CM Configuration Management
+    policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
+    policy.open-cluster-management.io/description: ""
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+  labels:
+    app.kubernetes.io/managed-by: policy-generator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+  name: policy-falcon-crs
+  namespace: policies
+spec:
+  dependencies:
+  - apiVersion: policy.open-cluster-management.io/v1
+    compliance: Compliant
+    kind: Policy
+    name: policy-falcon-secrets
+    namespace: policies
+  disabled: false
+  policy-templates:
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: policy-falcon-crs
+      spec:
+        object-templates:
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: falcon.crowdstrike.com/v1alpha1
+            kind: FalconAdmission
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                crowdstrike.com/component: admission
+                crowdstrike.com/part-of: Falcon
+                crowdstrike.com/provider: crowdstrike
+              name: falcon-admission
+            spec:
+              admissionConfig:
+                admissionControlEnabled: true
+                deployWatcher: true
+                disabledNamespaces:
+                  namespaces:
+                  - falcon-kac
+                  - falcon-operator
+                  - falcon-system
+                  - falcon-image-analyzer
+                  - openshift-kube-apiserver
+                  - openshift-kube-controller-manager
+                  - openshift-kube-scheduler
+                  - openshift-etcd
+                  - openshift-ingress
+                  - openshift-dns
+                  - openshift-multus
+                  - openshift-sdn
+                  - openshift-ovn-kubernetes
+                  - openshift-network-operator
+                  - openshift-cluster-version
+                  - openshift-operators
+                  - openshift-marketplace
+                  - open-cluster-management-agent
+                  - open-cluster-management-agent-addon
+                  - openshift-gitops
+                failurePolicy: Ignore
+                falconImageAnalyzerNamespace: falcon-image-analyzer
+                snapshotsEnabled: true
+                watcherEnabled: true
+              falcon:
+                tags:
+                - openshift
+                - rosa-hcp
+                - acm-managed
+                trace: none
+              falcon_api:
+                cloud_region: autodiscover
+              falconSecret:
+                enabled: true
+                namespace: falcon-operator
+                secretName: falcon-secrets
+              installNamespace: falcon-kac
+              registry:
+                tls:
+                  insecure_skip_verify: false
+                type: openshift
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: falcon.crowdstrike.com/v1alpha1
+            kind: FalconImageAnalyzer
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                crowdstrike.com/component: image-analyzer
+                crowdstrike.com/part-of: Falcon
+                crowdstrike.com/provider: crowdstrike
+              name: falcon-image-analyzer
+            spec:
+              falcon_api:
+                cloud_region: autodiscover
+              falconSecret:
+                enabled: true
+                namespace: falcon-operator
+                secretName: falcon-secrets
+              installNamespace: falcon-image-analyzer
+              registry:
+                type: crowdstrike
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: falcon.crowdstrike.com/v1alpha1
+            kind: FalconNodeSensor
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                crowdstrike.com/component: node-sensor
+                crowdstrike.com/created-by: falcon-operator
+                crowdstrike.com/name: falconnodesensor
+                crowdstrike.com/part-of: Falcon
+                crowdstrike.com/provider: crowdstrike
+              name: falcon-node-sensor
+            spec:
+              falcon:
+                tags:
+                - openshift
+                - rosa-hcp
+                - acm-managed
+                trace: none
+              falcon_api:
+                cloud_region: autodiscover
+              falconSecret:
+                enabled: true
+                namespace: falcon-operator
+                secretName: falcon-secrets
+              installNamespace: falcon-system
+              node:
+                resources:
+                  limits:
+                    cpu: "2"
+                    memory: 1Gi
+                  requests:
+                    cpu: 250m
+                    memory: 500Mi
+        pruneObjectBehavior: DeleteIfCreated
+        remediationAction: enforce
+        severity: high
+  remediationAction: enforce
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  annotations:
+    policy.open-cluster-management.io/categories: CM Configuration Management
+    policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
+    policy.open-cluster-management.io/description: ""
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+  labels:
+    app.kubernetes.io/managed-by: policy-generator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+  name: policy-falcon-operator-install
+  namespace: policies
+spec:
+  disabled: false
+  policy-templates:
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: policy-falcon-operator-install
+      spec:
+        object-templates:
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                app.kubernetes.io/name: falcon-operator
+                app.kubernetes.io/part-of: crowdstrike-falcon
+                openshift.io/cluster-monitoring: "true"
+                pod-security.kubernetes.io/audit: privileged
+                pod-security.kubernetes.io/enforce: privileged
+                pod-security.kubernetes.io/warn: privileged
+              name: falcon-operator
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                app.kubernetes.io/name: falcon-system
+                app.kubernetes.io/part-of: crowdstrike-falcon
+                openshift.io/cluster-monitoring: "true"
+                pod-security.kubernetes.io/audit: privileged
+                pod-security.kubernetes.io/enforce: privileged
+                pod-security.kubernetes.io/warn: privileged
+              name: falcon-system
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                app.kubernetes.io/name: falcon-kac
+                app.kubernetes.io/part-of: crowdstrike-falcon
+                openshift.io/cluster-monitoring: "true"
+                pod-security.kubernetes.io/audit: privileged
+                pod-security.kubernetes.io/enforce: privileged
+                pod-security.kubernetes.io/warn: privileged
+              name: falcon-kac
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                app.kubernetes.io/name: falcon-image-analyzer
+                app.kubernetes.io/part-of: crowdstrike-falcon
+                openshift.io/cluster-monitoring: "true"
+                pod-security.kubernetes.io/audit: privileged
+                pod-security.kubernetes.io/enforce: privileged
+                pod-security.kubernetes.io/warn: privileged
+              name: falcon-image-analyzer
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: operators.coreos.com/v1
+            kind: OperatorGroup
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                app.kubernetes.io/name: falcon-operator
+                app.kubernetes.io/part-of: crowdstrike-falcon
+              name: falcon-operator
+              namespace: falcon-operator
+            spec:
+              upgradeStrategy: Default
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: operators.coreos.com/v1alpha1
+            kind: Subscription
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                app.kubernetes.io/name: falcon-operator
+                app.kubernetes.io/part-of: crowdstrike-falcon
+              name: falcon-operator
+              namespace: falcon-operator
+            spec:
+              channel: certified-1.0
+              config:
+                env:
+                - name: ARGS
+                  value: --leader-elect --lease-duration=60s --renew-deadline=45s
+              installPlanApproval: Manual
+              name: falcon-operator
+              source: certified-operators
+              sourceNamespace: openshift-marketplace
+              startingCSV: falcon-operator.v1.15.0
+        pruneObjectBehavior: DeleteIfCreated
+        remediationAction: enforce
+        severity: high
+  remediationAction: enforce
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  annotations:
+    policy.open-cluster-management.io/categories: CM Configuration Management
+    policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
+    policy.open-cluster-management.io/description: ""
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+  labels:
+    app.kubernetes.io/managed-by: policy-generator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+  name: policy-falcon-secrets
+  namespace: policies
+spec:
+  dependencies:
+  - apiVersion: policy.open-cluster-management.io/v1
+    compliance: Compliant
+    kind: Policy
+    name: policy-falcon-operator-install
+    namespace: policies
+  disabled: false
+  policy-templates:
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        annotations:
+          policy.open-cluster-management.io/disable-templates: "false"
+        name: policy-falcon-secrets
+      spec:
+        object-templates:
+        - complianceType: musthave
+          objectDefinition:
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              labels:
+                app.kubernetes.io/managed-by: acm-policy
+                app.kubernetes.io/name: falcon-secrets
+                app.kubernetes.io/part-of: crowdstrike-falcon
+              name: falcon-secrets
+              namespace: falcon-operator
+            stringData:
+              falcon-cid: '{{hub fromSecret "policies" "falcon-api-credentials" "falcon-cid"
+                hub}}'
+              falcon-client-id: '{{hub fromSecret "policies" "falcon-api-credentials"
+                "falcon-client-id" hub}}'
+              falcon-client-secret: '{{hub fromSecret "policies" "falcon-api-credentials"
+                "falcon-client-secret" hub}}'
+              falcon-provisioning-token: '{{hub fromSecret "policies" "falcon-api-credentials"
+                "falcon-provisioning-token" hub}}'
+            type: Opaque
+        pruneObjectBehavior: DeleteIfCreated
+        remediationAction: enforce
+        severity: high
+  remediationAction: enforce
+---
+apiVersion: policy.open-cluster-management.io/v1beta1
+kind: PolicySet
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: policy-generator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+  name: falcon-platform
+  namespace: policies
+spec:
+  description: Installs CrowdStrike Falcon Platform Operator v1.15.0 (certified-1.0)
+    plus Node Sensor, Admission Controller, and Image Analyzer on the ROSA HCP hub
+    and all imported OpenShift clusters.
+  policies:
+  - policy-falcon-crs
+  - policy-falcon-operator-install
+  - policy-falcon-secrets

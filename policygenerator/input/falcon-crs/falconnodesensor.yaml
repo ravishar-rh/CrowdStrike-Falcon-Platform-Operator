@@ -1,0 +1,45 @@
+apiVersion: falcon.crowdstrike.com/v1alpha1
+kind: FalconNodeSensor
+metadata:
+  name: falcon-node-sensor
+  labels:
+    crowdstrike.com/component: node-sensor
+    crowdstrike.com/created-by: falcon-operator
+    crowdstrike.com/name: falconnodesensor
+    crowdstrike.com/part-of: Falcon
+    crowdstrike.com/provider: crowdstrike
+    app.kubernetes.io/managed-by: acm-policy
+spec:
+  installNamespace: falcon-system
+  falcon_api:
+    # Credentials come from falconSecret (hub-templated Secret). Keep cloud_region here.
+    cloud_region: autodiscover
+  falconSecret:
+    enabled: true
+    namespace: falcon-operator
+    secretName: falcon-secrets
+  falcon:
+    tags:
+      - openshift
+      - rosa-hcp
+      - acm-managed
+    trace: none
+  node:
+    # ROSA HCP: control plane is hosted (no access). Default DaemonSet scheduling
+    # covers worker nodes. Uncomment tolerations below only if you also need
+    # infra/control-plane node coverage on Classic/self-managed OpenShift.
+    #
+    # tolerations: []   # worker-only (stricter Red Hat SRE support on Classic)
+    resources:
+      requests:
+        cpu: 250m
+        memory: 500Mi
+      limits:
+        cpu: "2"
+        memory: 1Gi
+    # Optional: pin sensor version after validating in Falcon console
+    # version: "7.40"
+    # Optional: follow Falcon UI Linux sensor update policy
+    # advanced:
+    #   autoUpdate: normal
+    #   updatePolicy: "LinuxSensorUpdatePolicyName"

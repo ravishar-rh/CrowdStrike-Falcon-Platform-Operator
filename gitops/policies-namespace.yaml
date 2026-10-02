@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policies
+  labels:
+    app.kubernetes.io/name: policies
+    app.kubernetes.io/part-of: crowdstrike-falcon
+    openshift.io/cluster-monitoring: "true"

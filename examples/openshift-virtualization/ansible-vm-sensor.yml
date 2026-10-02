@@ -1,0 +1,25 @@
+# Example Ansible playbook: install Falcon sensor inside OpenShift Virtualization VMs.
+# Target inventory should be the guest VMs (SSH reachable), not the OpenShift nodes.
+#
+# Prerequisites:
+#   ansible-galaxy collection install crowdstrike.falcon
+#   export FALCON_CLIENT_ID=... FALCON_CLIENT_SECRET=... FALCON_CLOUD=us-1
+#
+---
+- name: Install and configure CrowdStrike Falcon on guest VMs
+  hosts: virt_vms
+  become: true
+  vars:
+    falcon_client_id: "{{ lookup('env', 'FALCON_CLIENT_ID') }}"
+    falcon_client_secret: "{{ lookup('env', 'FALCON_CLIENT_SECRET') }}"
+    falcon_cloud: "{{ lookup('env', 'FALCON_CLOUD') | default('us-1', true) }}"
+    falcon_tags:
+      - openshift-virtualization
+      - guest-vm
+  roles:
+    - role: crowdstrike.falcon.falcon_install
+      vars:
+        falcon_install_method: api
+    - role: crowdstrike.falcon.falcon_configure
+      vars:
+        falcon_option_tags: "{{ falcon_tags | join(',') }}"

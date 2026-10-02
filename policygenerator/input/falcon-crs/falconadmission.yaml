@@ -1,0 +1,58 @@
+apiVersion: falcon.crowdstrike.com/v1alpha1
+kind: FalconAdmission
+metadata:
+  name: falcon-admission
+  labels:
+    crowdstrike.com/component: admission
+    crowdstrike.com/part-of: Falcon
+    crowdstrike.com/provider: crowdstrike
+    app.kubernetes.io/managed-by: acm-policy
+spec:
+  installNamespace: falcon-kac
+  falcon_api:
+    cloud_region: autodiscover
+  falconSecret:
+    enabled: true
+    namespace: falcon-operator
+    secretName: falcon-secrets
+  falcon:
+    tags:
+      - openshift
+      - rosa-hcp
+      - acm-managed
+    trace: none
+  # Prefer openshift registry mirroring on OCP; use crowdstrike if pull from CS registry is allowed
+  registry:
+    type: openshift
+    tls:
+      insecure_skip_verify: false
+  admissionConfig:
+    admissionControlEnabled: true
+    deployWatcher: true
+    watcherEnabled: true
+    snapshotsEnabled: true
+    falconImageAnalyzerNamespace: falcon-image-analyzer
+    # Ignore OpenShift system namespaces that must remain schedulable during outages
+    disabledNamespaces:
+      namespaces:
+        - falcon-kac
+        - falcon-operator
+        - falcon-system
+        - falcon-image-analyzer
+        - openshift-kube-apiserver
+        - openshift-kube-controller-manager
+        - openshift-kube-scheduler
+        - openshift-etcd
+        - openshift-ingress
+        - openshift-dns
+        - openshift-multus
+        - openshift-sdn
+        - openshift-ovn-kubernetes
+        - openshift-network-operator
+        - openshift-cluster-version
+        - openshift-operators
+        - openshift-marketplace
+        - open-cluster-management-agent
+        - open-cluster-management-agent-addon
+        - openshift-gitops
+    failurePolicy: Ignore

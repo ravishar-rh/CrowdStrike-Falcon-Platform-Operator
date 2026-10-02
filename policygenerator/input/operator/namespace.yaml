@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: falcon-operator
+  labels:
+    openshift.io/cluster-monitoring: "true"
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+    app.kubernetes.io/name: falcon-operator
+    app.kubernetes.io/part-of: crowdstrike-falcon
+    app.kubernetes.io/managed-by: acm-policy
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: falcon-system
+  labels:
+    openshift.io/cluster-monitoring: "true"
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+    app.kubernetes.io/name: falcon-system
+    app.kubernetes.io/part-of: crowdstrike-falcon
+    app.kubernetes.io/managed-by: acm-policy
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: falcon-kac
+  labels:
+    openshift.io/cluster-monitoring: "true"
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+    app.kubernetes.io/name: falcon-kac
+    app.kubernetes.io/part-of: crowdstrike-falcon
+    app.kubernetes.io/managed-by: acm-policy
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: falcon-image-analyzer
+  labels:
+    openshift.io/cluster-monitoring: "true"
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
+    app.kubernetes.io/name: falcon-image-analyzer
+    app.kubernetes.io/part-of: crowdstrike-falcon
+    app.kubernetes.io/managed-by: acm-policy

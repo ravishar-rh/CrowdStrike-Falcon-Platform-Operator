@@ -1,0 +1,61 @@
+# Example cloud-init userData snippet for a Linux VirtualMachine.
+# Replace placeholders, then attach via cloudInitNoCloud on the VM template.
+#
+# NOTE: Prefer Ansible or golden images in production. Cloud-init with
+# embedded API secrets is only suitable for tightly controlled private repos
+# or when secrets are injected at provision time by an external system.
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: rhel9-falcon-example
+  namespace: vm-workloads
+  labels:
+    app.kubernetes.io/part-of: crowdstrike-falcon
+    crowdstrike.com/sensor: required
+spec:
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: rhel9-falcon-example
+    spec:
+      domain:
+        devices:
+          disks:
+            - name: rootdisk
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+            - name: default
+              masquerade: {}
+        resources:
+          requests:
+            memory: 4Gi
+            cpu: "2"
+      networks:
+        - name: default
+          pod: {}
+      volumes:
+        - name: rootdisk
+          dataVolume:
+            name: rhel9-falcon-example-root
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              package_update: true
+              packages:
+                - curl
+              runcmd:
+                # Download + install Falcon Linux sensor using your preferred method.
+                # Example pattern (pseudo — replace with your internal bootstrap script):
+                # - curl -fsSL https://artifacts.example.com/falcon-bootstrap.sh | bash
+                - echo "Install Falcon guest sensor via bootstrap script or Ansible"
+                - |
+                  if [ -x /opt/CrowdStrike/falconctl ]; then
+                    /opt/CrowdStrike/falconctl -s --tags="openshift-virtualization,guest-vm"
+                  fi
