@@ -133,19 +133,36 @@ On ROSA HCP the control plane is hosted by Red Hat — you only manage workers. 
 
 Output: `policies/falcon-operator-policies.yaml`.
 
-### 4. Create hub credentials Secret (once)
+### 4. Provide hub credentials via External Secrets (GitOps — no manual Secret)
+
+This hub uses **External Secrets Operator**. Do **not** `oc create secret` by hand.
+
+1. Store credentials in your backend (AWS Secrets Manager example):
 
 ```bash
-oc apply -f gitops/policies-namespace.yaml
-
-oc create secret generic falcon-api-credentials -n rhacm-policies \
-  --from-literal=falcon-client-id='YOUR_CLIENT_ID' \
-  --from-literal=falcon-client-secret='YOUR_CLIENT_SECRET' \
-  --from-literal=falcon-cid='YOUR_CID' \
-  --from-literal=falcon-provisioning-token=''
+aws secretsmanager create-secret \
+  --name crowdstrike/falcon-operator \
+  --secret-string '{
+    "falcon-client-id":"YOUR_CLIENT_ID",
+    "falcon-client-secret":"YOUR_CLIENT_SECRET",
+    "falcon-cid":"YOUR_CID",
+    "falcon-provisioning-token":""
+  }'
 ```
 
-Never commit real credentials. Hub templates copy these values into each managed cluster’s `falcon-operator/falcon-secrets` Secret.
+2. Edit `gitops/external-secrets/externalsecret-falcon-api-credentials.yaml` and set `secretStoreRef` to your existing `ClusterSecretStore` / `SecretStore`, and `remoteRef.key` to the remote secret name/path.
+
+3. Sync via GitOps (pick one):
+   - Apply `gitops/application-external-secrets.yaml` (Argo CD Application in this repo), **or**
+   - Drop `gitops/external-secrets/externalsecret-falcon-api-credentials.yaml` into your existing hub GitOps path for `rhacm-policies`.
+
+4. Confirm the Secret was materialized:
+
+```bash
+oc get externalsecret,secret -n rhacm-policies falcon-api-credentials
+```
+
+ACM hub templates then copy those values into each managed cluster’s `falcon-operator/falcon-secrets` Secret. Details: [`gitops/external-secrets/README.md`](gitops/external-secrets/README.md).
 
 ### 5. Grant OpenShift GitOps RBAC on the hub
 
@@ -288,7 +305,7 @@ spec:
 | Policy NonCompliant on Subscription | CatalogSource `certified-operators` healthy; CSV name matches `falcon-operator.v1.15.0`. |
 | InstallPlan pending | Manual approval required (step 7). |
 | CRs NonCompliant / unknown type | Operator CSV not Succeeded yet; wait or approve InstallPlan. |
-| Secret empty / auth errors | Hub Secret `rhacm-policies/falcon-api-credentials` exists; hub templates enabled. |
+| Secret empty / auth errors | `ExternalSecret` Ready in `rhacm-policies`; Secret `falcon-api-credentials` exists; `secretStoreRef` / remote key correct; hub templates enabled. |
 | Node sensor CrashLoop | Privileged PSA/SCC; node connectivity to Falcon; sensor version ≥ 7.40. |
 | Admission webhook blocking deploys | Review `disabledNamespaces`; temporarily `failurePolicy: Ignore`. |
 | Image pull failures | Network to CrowdStrike registry or OpenShift ImageStream mirror permissions. |
