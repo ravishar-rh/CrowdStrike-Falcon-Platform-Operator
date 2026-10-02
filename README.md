@@ -41,10 +41,11 @@ For OpenShift (including ROSA HCP), CrowdStrike recommends **FalconNodeSensor** 
 │   ├── falcon-operator-policies.yaml
 │   └── kustomization.yaml
 ├── gitops/
-│   ├── policies-namespace.yaml
+│   ├── external-secrets/            # ExternalSecret → falcon-api-credentials
+│   ├── application-external-secrets.yaml
 │   ├── openshift-gitops-rbac.yaml   # RBAC for Argo CD → ACM Policies
-│   ├── application.yaml             # Argo CD Application
-│   └── falcon-api-credentials.example.yaml
+│   └── application.yaml             # Argo CD Application
+├── terraform/aws-secretsmanager-falcon/  # Creates AWS SM secret (step 1)
 ├── scripts/
 │   ├── install-policy-generator.sh
 │   └── generate-policies.sh
@@ -133,24 +134,24 @@ On ROSA HCP the control plane is hosted by Red Hat — you only manage workers. 
 
 Output: `policies/falcon-operator-policies.yaml`.
 
-### 4. Provide hub credentials via External Secrets (GitOps — no manual Secret)
+### 4. Provide hub credentials via Terraform + External Secrets (no manual K8s Secret)
 
 This hub uses **External Secrets Operator**. Do **not** `oc create secret` by hand.
 
-1. Store credentials in your backend (AWS Secrets Manager example):
+1. **Create the AWS Secrets Manager secret with Terraform:**
 
 ```bash
-aws secretsmanager create-secret \
-  --name crowdstrike/falcon-operator \
-  --secret-string '{
-    "falcon-client-id":"YOUR_CLIENT_ID",
-    "falcon-client-secret":"YOUR_CLIENT_SECRET",
-    "falcon-cid":"YOUR_CID",
-    "falcon-provisioning-token":""
-  }'
+cd terraform/aws-secretsmanager-falcon
+export TF_VAR_falcon_client_id='YOUR_CLIENT_ID'
+export TF_VAR_falcon_client_secret='YOUR_CLIENT_SECRET'
+export TF_VAR_falcon_cid='YOUR_CID'
+export TF_VAR_falcon_provisioning_token=''
+terraform init && terraform apply
 ```
 
-2. Edit `gitops/external-secrets/externalsecret-falcon-api-credentials.yaml` and set `secretStoreRef` to your existing `ClusterSecretStore` / `SecretStore`, and `remoteRef.key` to the remote secret name/path.
+Default secret name: `crowdstrike/falcon-operator`. Details: [`terraform/aws-secretsmanager-falcon/README.md`](terraform/aws-secretsmanager-falcon/README.md).
+
+2. Edit `gitops/external-secrets/externalsecret-falcon-api-credentials.yaml` and set `secretStoreRef` to your existing `ClusterSecretStore` / `SecretStore`, and `remoteRef.key` to the Terraform `secret_name` output (default `crowdstrike/falcon-operator`).
 
 3. Sync via GitOps (pick one):
    - Apply `gitops/application-external-secrets.yaml` (Argo CD Application in this repo), **or**

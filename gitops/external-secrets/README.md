@@ -4,24 +4,19 @@
 #   AWS Secrets Manager / Vault / …  →  ExternalSecret  →  K8s Secret
 #   rhacm-policies/falcon-api-credentials  →  ACM hub templates  →  managed clusters
 #
-# ## 1. Create the remote secret (one-time, in your secret backend)
+# ## 1. Create the remote secret with Terraform
 #
-# AWS Secrets Manager example (JSON):
+#   cd terraform/aws-secretsmanager-falcon
+#   export TF_VAR_falcon_client_id='...'
+#   export TF_VAR_falcon_client_secret='...'
+#   export TF_VAR_falcon_cid='...'
+#   export TF_VAR_falcon_provisioning_token=''
+#   terraform init && terraform apply
 #
-#   aws secretsmanager create-secret \
-#     --name crowdstrike/falcon-operator \
-#     --secret-string '{
-#       "falcon-client-id":"YOUR_CLIENT_ID",
-#       "falcon-client-secret":"YOUR_CLIENT_SECRET",
-#       "falcon-cid":"YOUR_CID",
-#       "falcon-provisioning-token":""
-#     }'
+# Creates AWS SM secret `crowdstrike/falcon-operator` with keys:
+#   falcon-client-id, falcon-client-secret, falcon-cid, falcon-provisioning-token
 #
-# Required keys:
-#   falcon-client-id
-#   falcon-client-secret
-#   falcon-cid
-#   falcon-provisioning-token   (empty string OK)
+# See terraform/aws-secretsmanager-falcon/README.md
 #
 # ## 2. Point ExternalSecret at your existing store
 #
