@@ -136,20 +136,28 @@ Outputs:
 - `policies/policy-falcon-operator-install.yaml` — **use this** in app-of-apps (operator only, no credentials)
 - `policies/falcon-operator-secrets-crs-policies.yaml` — optional; policies are `disabled: true` until credentials exist
 
-### App-of-apps / `sources/policies` (important)
+### App-of-apps with gate files (`clusters/<name>/*.yaml` → `sources/<app>/`)
 
-Dropping a file on disk is **not enough** if that directory uses Kustomize. You must also list it:
+This matches the common OpenShift GitOps pattern:
 
-```yaml
-# sources/policies/kustomization.yaml
-resources:
-  - some-existing-policy.yaml
-  - policy-falcon-operator-install.yaml   # add this line
-```
+| Piece | Role |
+| --- | --- |
+| `clusters/<hub>/policies.yaml` | **Gate file** — creates an Argo CD Application for that cluster |
+| `sources/policies/` | App content. Gate filename `policies.yaml` ⇒ path `sources/policies` |
+| No `kustomization.yaml` required | Argo CD directory mode applies every `*.yaml` in that folder |
 
-Then commit + sync. You should see a **Policy**, **Placement**, and **PlacementBinding** (there is **no PolicySet** in the install-only file).
+**What to drop**
 
-If sync still skips the file, check the Argo CD Application for errors — older combined files contained `{{hub ...}}` which breaks Helm-rendered app-of-apps paths. The install-only file has no hub templates.
+1. Put **`policy-falcon-operator-install.yaml`** in `sources/policies/` (replace any older `falcon-operator-policies.yaml`).
+2. Confirm a hub gate exists, e.g. `clusters/<your-hub>/policies.yaml` (even `{}` / minimal overrides is enough).
+3. Commit + push the **app-of-apps repo** (not only this Falcon repo).
+4. In Argo CD, open the Application named like `<hub>---platform---policies` and check **sync status / errors**.
+
+You should see on the hub: `Policy/policy-falcon-operator-install`, `Placement/placement-falcon-operator`, `PlacementBinding` — **not** a PolicySet.
+
+**If other files in `sources/policies` sync but Falcon does not**, the usual cause is the *old* multi-doc file: it had a `PolicySet` and `{{hub fromSecret ...}}` strings that break sync for that manifest (and can leave the whole app unhealthy). Use the install-only file (no hub templates, no PolicySet).
+
+**Credentials are not required for operator install.** Sensors/CRs come later via `falcon-operator-secrets-crs-policies.yaml` after ExternalSecret exists.
 
 ### 4. Provide hub credentials via Terraform + External Secrets (no manual K8s Secret)
 

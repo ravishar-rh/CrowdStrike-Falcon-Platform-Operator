@@ -1,0 +1,21 @@
+# Example gate file for the ACM hub cluster in an app-of-apps repo.
+#
+# Path in YOUR gitops repo (not this Falcon repo):
+#   clusters/<your-hub-cluster-name>/policies.yaml
+#
+# The filename "policies" makes ApplicationSet sync:
+#   sources/policies/
+#
+# Put policy-falcon-operator-install.yaml into sources/policies/ of that same repo.
+# Minimal gate (defaults only) can be empty object or the overrides below.
+---
+spec:
+  project: platform
+  destination:
+    # Policies declare metadata.namespace: rhacm-policies themselves.
+    # Set destination namespace to match your other ACM policy apps if required.
+    namespace: rhacm-policies
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
