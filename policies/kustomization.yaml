@@ -1,4 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# App-of-apps: list files under your sources/policies kustomization resources:.
+# Start with operator install only. Enable secrets/CRs after ExternalSecret is Ready.
 resources:
-  - falcon-operator-policies.yaml
+  - policy-falcon-operator-install.yaml
+  # - falcon-operator-secrets-crs-policies.yaml

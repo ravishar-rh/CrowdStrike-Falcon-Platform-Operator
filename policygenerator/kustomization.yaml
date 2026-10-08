@@ -1,12 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Policy Generator is an exec Kustomize plugin. Build with:
-#   kustomize build --enable-alpha-plugins .
-# or use ../scripts/generate-policies.sh
+# Default build: operator install only (safe for app-of-apps without AWS creds).
+# To also emit secrets/CR policies: kustomize build --enable-alpha-plugins .
+# with both generators, or run ../scripts/generate-policies.sh
 
 generators:
-  - policyGenerator.yaml
+  - policyGenerator-install.yaml
 
 labels:
   - pairs:

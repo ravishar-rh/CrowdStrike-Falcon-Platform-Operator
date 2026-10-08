@@ -132,7 +132,24 @@ On ROSA HCP the control plane is hosted by Red Hat — you only manage workers. 
 ./scripts/generate-policies.sh
 ```
 
-Output: `policies/falcon-operator-policies.yaml`.
+Outputs:
+- `policies/policy-falcon-operator-install.yaml` — **use this** in app-of-apps (operator only, no credentials)
+- `policies/falcon-operator-secrets-crs-policies.yaml` — optional; policies are `disabled: true` until credentials exist
+
+### App-of-apps / `sources/policies` (important)
+
+Dropping a file on disk is **not enough** if that directory uses Kustomize. You must also list it:
+
+```yaml
+# sources/policies/kustomization.yaml
+resources:
+  - some-existing-policy.yaml
+  - policy-falcon-operator-install.yaml   # add this line
+```
+
+Then commit + sync. You should see a **Policy**, **Placement**, and **PlacementBinding** (there is **no PolicySet** in the install-only file).
+
+If sync still skips the file, check the Argo CD Application for errors — older combined files contained `{{hub ...}}` which breaks Helm-rendered app-of-apps paths. The install-only file has no hub templates.
 
 ### 4. Provide hub credentials via Terraform + External Secrets (no manual K8s Secret)
 
@@ -226,13 +243,14 @@ No extra ClusterRole is required for the Falcon Operator beyond what OLM install
 
 ## Generated policies
 
-| Policy | Enforces |
-| --- | --- |
-| `policy-falcon-operator-install` | Namespaces (`falcon-operator`, `falcon-system`, `falcon-kac`, `falcon-image-analyzer`), `OperatorGroup`, `Subscription` (`certified-1.0` / `falcon-operator.v1.15.0`) |
-| `policy-falcon-secrets` | `Secret/falcon-secrets` in `falcon-operator` (hub-templated) |
-| `policy-falcon-crs` | `FalconNodeSensor`, `FalconAdmission`, `FalconImageAnalyzer` |
+| File | Policy | Needs credentials? | Default |
+| --- | --- | --- | --- |
+| `policy-falcon-operator-install.yaml` | `policy-falcon-operator-install` — Namespaces, OperatorGroup, Subscription `falcon-operator.v1.15.0` | **No** | enabled |
+| `falcon-operator-secrets-crs-policies.yaml` | `policy-falcon-secrets`, `policy-falcon-crs` | Yes (ExternalSecret → hub Secret) | **disabled** |
 
-Ordered with `orderPolicies: true` (install → secrets → CRs). Bound via PolicySet `falcon-platform` to Placement `placement-falcon-operator` (`vendor=OpenShift`).
+Bound via PlacementBinding → Policy (no PolicySet) to Placement `placement-falcon-operator` (`vendor=OpenShift`).
+
+**Yes — the operator can install without AWS Secrets Manager / ExternalSecret.** Sensors/CRs wait until you enable the secrets+CRs file and have credentials.
 
 ---
 

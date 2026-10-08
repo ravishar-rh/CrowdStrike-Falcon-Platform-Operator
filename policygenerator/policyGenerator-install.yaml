@@ -1,0 +1,26 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: falcon-operator-install
+placementBindingDefaults:
+  name: binding-falcon-operator-install
+policyDefaults:
+  namespace: rhacm-policies
+  categories:
+    - CM Configuration Management
+  controls:
+    - CM-2 Baseline Configuration
+  standards:
+    - NIST SP 800-53
+  severity: high
+  remediationAction: enforce
+  pruneObjectBehavior: DeleteIfCreated
+  # Bind Policies directly (no PolicySet) — matches typical app-of-apps policy repos
+  placement:
+    placementPath: input/placement/placement-falcon-operator.yaml
+policies:
+  # Operator only — no credentials required. InstallPlan may still need Manual approval.
+  - name: policy-falcon-operator-install
+    disabled: false
+    manifests:
+      - path: input/operator/
